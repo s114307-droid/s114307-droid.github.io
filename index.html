@@ -17,7 +17,7 @@
   <style>
     body {
       margin: 0;
-      background: #222;
+      background: #000;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -25,64 +25,104 @@
     }
     canvas {
       border: 2px solid #000;
-      background: #4caf50;
     }
   </style>
 </head>
 <body>
 
-<canvas id="game" width="800" height="500"></canvas>
+<canvas id="game" width="900" height="550"></canvas>
 
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// 河的位置
+// 載入圖片
+const bgImage = new Image();
+bgImage.src = "images/jungle.jpg";
+
+const otterImage = new Image();
+otterImage.src = "images/otter.png";
+
+// 河流設定
 const river = {
-  x: 0,
-  y: 180,
-  width: canvas.width,
-  height: 140
+  y: 260,
+  height: 120
 };
 
 // 海獺
 const otter = {
-  x: 380,
-  y: 240,
-  size: 30,
-  speed: 4
+  x: 400,
+  y: 290,
+  width: 90,
+  height: 60,
+  speed: 4,
+  floatOffset: 0
 };
 
-// 鍵盤控制
 const keys = {};
 window.addEventListener("keydown", e => keys[e.key] = true);
 window.addEventListener("keyup", e => keys[e.key] = false);
 
-// 更新
 function update() {
   if (keys["ArrowUp"]) otter.y -= otter.speed;
   if (keys["ArrowDown"]) otter.y += otter.speed;
   if (keys["ArrowLeft"]) otter.x -= otter.speed;
   if (keys["ArrowRight"]) otter.x += otter.speed;
 
-  // 不讓海獺跑出畫面
-  otter.x = Math.max(0, Math.min(canvas.width - otter.size, otter.x));
-  otter.y = Math.max(0, Math.min(canvas.height - otter.size, otter.y));
+  // 限制在河裡
+  otter.x = Math.max(0, Math.min(canvas.width - otter.width, otter.x));
+  otter.y = Math.max(
+    river.y,
+    Math.min(river.y + river.height - otter.height, otter.y)
+  );
+
+  // 游泳漂浮動畫
+  otter.floatOffset += 0.05;
 }
 
-// 繪製
 function draw() {
-  // 叢林背景
-  ctx.fillStyle = "#4caf50";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // 背景
+  ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
 
-  // 河
-  ctx.fillStyle = "#2196f3";
-  ctx.fillRect(river.x, river.y, river.width, river.height);
+  // 河流
+  ctx.fillStyle = "rgba(33, 150, 243, 0.35)";
+  ctx.fillRect(0, river.y, canvas.width, river.height);
 
-  // 河的波紋
-  ctx.strokeStyle = "rgba(255,255,255,0.3)";
-  for (let i = 0; i < 10; i++) {
+  // 波紋
+  ctx.strokeStyle = "rgba(255,255,255,0.4)";
+  for (let i = 0; i < 12; i++) {
     ctx.beginPath();
-    ctx.moveTo(i * 80, river.y + 40);
-    ctx.lineTo(
+    ctx.moveTo(i * 80, river.y + 30);
+    ctx.lineTo(i * 80 + 40, river.y + 50);
+    ctx.stroke();
+  }
+
+  // 海獺（帶漂浮）
+  const floatY = Math.sin(otter.floatOffset) * 4;
+  ctx.drawImage(
+    otterImage,
+    otter.x,
+    otter.y + floatY,
+    otter.width,
+    otter.height
+  );
+}
+
+function gameLoop() {
+  update();
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+// 確保圖片載入完成再開始
+let loaded = 0;
+[bgImage, otterImage].forEach(img => {
+  img.onload = () => {
+    loaded++;
+    if (loaded === 2) gameLoop();
+  };
+});
+</script>
+
+</body>
+</html>
