@@ -9,3 +9,80 @@
       hello world
   </body>
 </html>
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>叢林裡的海獺</title>
+  <style>
+    body {
+      margin: 0;
+      background: #222;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    canvas {
+      border: 2px solid #000;
+      background: #4caf50;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="game" width="800" height="500"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+// 河的位置
+const river = {
+  x: 0,
+  y: 180,
+  width: canvas.width,
+  height: 140
+};
+
+// 海獺
+const otter = {
+  x: 380,
+  y: 240,
+  size: 30,
+  speed: 4
+};
+
+// 鍵盤控制
+const keys = {};
+window.addEventListener("keydown", e => keys[e.key] = true);
+window.addEventListener("keyup", e => keys[e.key] = false);
+
+// 更新
+function update() {
+  if (keys["ArrowUp"]) otter.y -= otter.speed;
+  if (keys["ArrowDown"]) otter.y += otter.speed;
+  if (keys["ArrowLeft"]) otter.x -= otter.speed;
+  if (keys["ArrowRight"]) otter.x += otter.speed;
+
+  // 不讓海獺跑出畫面
+  otter.x = Math.max(0, Math.min(canvas.width - otter.size, otter.x));
+  otter.y = Math.max(0, Math.min(canvas.height - otter.size, otter.y));
+}
+
+// 繪製
+function draw() {
+  // 叢林背景
+  ctx.fillStyle = "#4caf50";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // 河
+  ctx.fillStyle = "#2196f3";
+  ctx.fillRect(river.x, river.y, river.width, river.height);
+
+  // 河的波紋
+  ctx.strokeStyle = "rgba(255,255,255,0.3)";
+  for (let i = 0; i < 10; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * 80, river.y + 40);
+    ctx.lineTo(
