@@ -25,82 +25,36 @@ canvas {
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// 背景圖片
-const bgImage = new Image();
-bgImage.src = "images/jungle.jpg";
+/* ===== 用程式產生背景（假裝是圖片） ===== */
+const bgImage = document.createElement("canvas");
+bgImage.width = 900;
+bgImage.height = 550;
+const bgCtx = bgImage.getContext("2d");
 
-// 海獺圖片
-const otterImage = new Image();
-otterImage.src = "images/otter.png";
+// 天空
+bgCtx.fillStyle = "#81c784";
+bgCtx.fillRect(0, 0, 900, 300);
 
-// 河
-const river = { y: 260, height: 120 };
+// 地面
+bgCtx.fillStyle = "#388e3c";
+bgCtx.fillRect(0, 300, 900, 250);
 
-// 海獺
-const otter = {
-  x: 400,
-  y: 290,
-  width: 90,
-  height: 60,
-  speed: 4,
-  float: 0
-};
-
-const keys = {};
-window.addEventListener("keydown", e => keys[e.key] = true);
-window.addEventListener("keyup", e => keys[e.key] = false);
-
-let imagesLoaded = 0;
-function checkLoaded() {
-  imagesLoaded++;
-  if (imagesLoaded === 2) {
-    requestAnimationFrame(loop);
-  }
+// 樹
+for (let i = 0; i < 15; i++) {
+  bgCtx.fillStyle = "#5d4037";
+  bgCtx.fillRect(i * 70 + 20, 200, 20, 100);
+  bgCtx.fillStyle = "#2e7d32";
+  bgCtx.beginPath();
+  bgCtx.arc(i * 70 + 30, 180, 40, 0, Math.PI * 2);
+  bgCtx.fill();
 }
 
-bgImage.onload = checkLoaded;
-otterImage.onload = checkLoaded;
+/* ===== 海獺（畫出來，不用圖片） ===== */
+function drawOtter(x, y) {
+  ctx.fillStyle = "#6d4c41";
+  ctx.beginPath();
+  ctx.ellipse(x + 45, y + 30, 45, 25, 0, 0, Math.PI * 2);
+  ctx.fill();
 
-bgImage.onerror = () => alert("背景圖片載入失敗");
-otterImage.onerror = () => alert("海獺圖片載入失敗");
-
-function update() {
-  if (keys["ArrowLeft"]) otter.x -= otter.speed;
-  if (keys["ArrowRight"]) otter.x += otter.speed;
-  if (keys["ArrowUp"]) otter.y -= otter.speed;
-  if (keys["ArrowDown"]) otter.y += otter.speed;
-
-  otter.x = Math.max(0, Math.min(canvas.width - otter.width, otter.x));
-  otter.y = Math.max(
-    river.y,
-    Math.min(river.y + river.height - otter.height, otter.y)
-  );
-
-  otter.float += 0.05;
-}
-
-function draw() {
-  ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
-
-  ctx.fillStyle = "rgba(33,150,243,0.4)";
-  ctx.fillRect(0, river.y, canvas.width, river.height);
-
-  const floatY = Math.sin(otter.float) * 4;
-  ctx.drawImage(
-    otterImage,
-    otter.x,
-    otter.y + floatY,
-    otter.width,
-    otter.height
-  );
-}
-
-function loop() {
-  update();
-  draw();
-  requestAnimationFrame(loop);
-}
-</script>
-
-</body>
-</html>
+  ctx.fillStyle = "#3e2723";
+  ctx.beginPath()
