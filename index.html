@@ -136,7 +136,7 @@ function update() {
 /* ===== UI 工具 ===== */
 function isHoverButton(){
   const bx = canvas.width/2 - 120;
-  const by = canvas.height/2 + 70;
+  const by = canvas.height/2 + 110;
   return mouse.x >= bx && mouse.x <= bx+240 && mouse.y >= by && mouse.y <= by+56;
 }
 function roundRect(x,y,w,h,r){
@@ -195,28 +195,38 @@ function draw(){
 
   // 精緻結算畫面
   if(gameOver){
-    ctx.fillStyle="rgba(0,0,0,0.65)";
+    // 背景半透明模糊
+    ctx.fillStyle="rgba(0,0,0,0.5)";
     ctx.fillRect(0,0,canvas.width,canvas.height);
 
-    ctx.shadowColor="#fff";
-    ctx.shadowBlur=20;
-    ctx.fillStyle="#ffffff";
-    ctx.font="56px sans-serif";
+    // GAME OVER 標題
+    const titleGrad = ctx.createLinearGradient(canvas.width/2-150,0,canvas.width/2+150,0);
+    titleGrad.addColorStop(0,"#ff5252");
+    titleGrad.addColorStop(1,"#ffeb3b");
+    ctx.shadowColor="#000";
+    ctx.shadowBlur=15;
+    ctx.fillStyle = titleGrad;
+    ctx.font="64px sans-serif";
     ctx.textAlign="center";
-    ctx.fillText("GAME OVER",canvas.width/2,canvas.height/2-50);
+    ctx.fillText("GAME OVER",canvas.width/2,canvas.height/2-60);
 
-    ctx.shadowBlur=0;
-    ctx.font="26px sans-serif";
-    ctx.fillStyle="#ffeb3b";
-    ctx.fillText("Final Score",canvas.width/2,canvas.height/2);
+    // 分數框
+    ctx.shadowBlur=10;
+    const scoreBoxX = canvas.width/2 - 120;
+    const scoreBoxY = canvas.height/2;
+    const scoreBoxW = 240;
+    const scoreBoxH = 80;
+    ctx.fillStyle="rgba(255,255,255,0.1)";
+    roundRect(scoreBoxX,scoreBoxY,scoreBoxW,scoreBoxH,16);
+    ctx.fill();
 
-    ctx.font="40px sans-serif";
     ctx.fillStyle="#fff";
-    ctx.fillText(score,canvas.width/2,canvas.height/2+45);
+    ctx.font="32px sans-serif";
+    ctx.fillText("Final Score: "+score,canvas.width/2,canvas.height/2+50);
 
-    // 按鈕
+    // 重新開始按鈕
     const bx = canvas.width/2 - 120;
-    const by = canvas.height/2 + 70;
+    const by = canvas.height/2 + 110;
     ctx.fillStyle = isHoverButton() ? "#42a5f5" : "#1e88e5";
     roundRect(bx,by,240,56,14);
     ctx.fill();
