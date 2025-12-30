@@ -41,7 +41,6 @@ const pointData = [
   { x: 450, dy: 60, r: 10, color: "#ff5252", value: 5 },
   { x: 600, dy: 80, r: 10, color: "#ff5252", value: 5 },
   { x: 750, dy: 30, r: 10, color: "#ff5252", value: 5 },
-
   { x: 200, dy: 70, r: 8, color: "#ffeb3b", value: 2 },
   { x: 260, dy: 30, r: 8, color: "#ffeb3b", value: 2 },
   { x: 360, dy: 90, r: 8, color: "#ffeb3b", value: 2 },
@@ -62,8 +61,15 @@ function generateGrass() {
   const grassCount = 200;
   for(let i=0;i<grassCount;i++){
     let x = Math.random()*canvas.width;
-    let y = Math.random()*canvas.height;
-    if(y > river.y && y < river.y+river.height) y -= (river.height/2); // 避開河道
+    let y;
+    // 草只能生成在河道之外
+    if(Math.random()<0.5){
+      // 河道上方
+      y = Math.random()*(river.y-10); 
+    } else {
+      // 河道下方
+      y = river.y+river.height+Math.random()*(canvas.height-(river.y+river.height));
+    }
     const h = 8 + Math.random()*12;
     const color = ["#1b5e20","#2e7d32","#43a047"][Math.floor(Math.random()*3)];
     const sway = Math.random()*0.5+0.2;
@@ -157,7 +163,6 @@ function draw(){
     ctx.strokeStyle = g.color;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    // 草尖隨 float 擺動
     const sway = Math.sin(otter.float*g.sway + g.x)*2;
     ctx.moveTo(g.x,g.y);
     ctx.lineTo(g.x+sway,g.y-g.h);
