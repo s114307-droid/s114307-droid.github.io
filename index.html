@@ -15,6 +15,7 @@ body {
 canvas {
   border: 2px solid #000;
   background: #2e7d32;
+  cursor: pointer;
 }
 </style>
 </head>
@@ -26,17 +27,19 @@ canvas {
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// 河
+// 河（初始值）
+const riverStart = { y: 260, height: 120 };
 const river = {
-  y: 260,
-  height: 120,
-  shrinkSpeed: 10 / 60 // 每秒縮 10px
+  y: riverStart.y,
+  height: riverStart.height,
+  shrinkSpeed: 10 / 60
 };
 
-// 海獺
+// 海獺（初始值）
+const otterStart = { x: 400, y: 290 };
 const otter = {
-  x: 400,
-  y: 290,
+  x: otterStart.x,
+  y: otterStart.y,
   width: 90,
   height: 60,
   speed: 4,
@@ -46,42 +49,90 @@ const otter = {
 let score = 0;
 let gameOver = false;
 
-// 紅點 + 黃點（固定）
-const points = [
-  // 🔴 紅點（5 分）x5
-  { x: 150, y: river.y + 20, r: 10, color: "red", value: 5, active: true },
-  { x: 300, y: river.y + 40, r: 10, color: "red", value: 5, active: true },
-  { x: 450, y: river.y + 60, r: 10, color: "red", value: 5, active: true },
-  { x: 600, y: river.y + 80, r: 10, color: "red", value: 5, active: true },
-  { x: 750, y: river.y + 30, r: 10, color: "red", value: 5, active: true },
+// 點數資料（原始設定）
+const pointData = [
+  // 🔴 紅點
+  { x: 150, dy: 20, r: 10, color: "red", value: 5 },
+  { x: 300, dy: 40, r: 10, color: "red", value: 5 },
+  { x: 450, dy: 60, r: 10, color: "red", value: 5 },
+  { x: 600, dy: 80, r: 10, color: "red", value: 5 },
+  { x: 750, dy: 30, r: 10, color: "red", value: 5 },
 
-  // 🟡 黃點（2 分）x6
-  { x: 200, y: river.y + 70, r: 8, color: "yellow", value: 2, active: true },
-  { x: 260, y: river.y + 30, r: 8, color: "yellow", value: 2, active: true },
-  { x: 360, y: river.y + 90, r: 8, color: "yellow", value: 2, active: true },
-  { x: 520, y: river.y + 20, r: 8, color: "yellow", value: 2, active: true },
-  { x: 680, y: river.y + 60, r: 8, color: "yellow", value: 2, active: true },
-  { x: 820, y: river.y + 90, r: 8, color: "yellow", value: 2, active: true }
+  // 🟡 黃點
+  { x: 200, dy: 70, r: 8, color: "yellow", value: 2 },
+  { x: 260, dy: 30, r: 8, color: "yellow", value: 2 },
+  { x: 360, dy: 90, r: 8, color: "yellow", value: 2 },
+  { x: 520, dy: 20, r: 8, color: "yellow", value: 2 },
+  { x: 680, dy: 60, r: 8, color: "yellow", value: 2 },
+  { x: 820, dy: 90, r: 8, color: "yellow", value: 2 }
 ];
+
+let points = [];
+
+// 重新產生點數
+function resetPoints() {
+  points = pointData.map(p => ({
+    x: p.x,
+    y: river.y + p.dy,
+    r: p.r,
+    color: p.color,
+    value: p.value,
+    active: true
+  }));
+}
+
+// 重新開始遊戲
+function restartGame() {
+  score = 0;
+  gameOver = false;
+
+  river.y = riverStart.y;
+  river.height = riverStart.height;
+
+  otter.x = otterStart.x;
+  otter.y = otterStart.y;
+  otter.float = 0;
+
+  resetPoints();
+}
+
+// 初始化
+resetPoints();
 
 const keys = {};
 window.addEventListener("keydown", e => keys[e.key] = true);
 window.addEventListener("keyup", e => keys[e.key] = false);
 
+// 滑鼠點擊（重新開始）
+canvas.addEventListener("click", e => {
+  if (!gameOver) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  // 按鈕範圍
+  const bx = canvas.width / 2 - 100;
+  const by = canvas.height / 2 + 60;
+  const bw = 200;
+  const bh = 50;
+
+  if (mx >= bx && mx <= bx + bw && my >= by && my <= by + bh) {
+    restartGame();
+  }
+});
+
 function update() {
   if (gameOver) return;
 
-  // 移動
   if (keys["ArrowLeft"]) otter.x -= otter.speed;
   if (keys["ArrowRight"]) otter.x += otter.speed;
   if (keys["ArrowUp"]) otter.y -= otter.speed;
   if (keys["ArrowDown"]) otter.y += otter.speed;
 
-  // 河道縮小（上下同時）
   river.y += river.shrinkSpeed / 2;
   river.height -= river.shrinkSpeed;
 
-  // 限制海獺只能在河裡
   otter.y = Math.max(
     river.y,
     Math.min(river.y + river.height - otter.height, otter.y)
@@ -89,20 +140,17 @@ function update() {
 
   otter.x = Math.max(0, Math.min(canvas.width - otter.width, otter.x));
 
-  // 吃點數
   points.forEach(p => {
     if (!p.active) return;
     const dx = (otter.x + otter.width / 2) - p.x;
     const dy = (otter.y + otter.height / 2) - p.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
-
     if (dist < p.r + otter.height / 2) {
       score += p.value;
       p.active = false;
     }
   });
 
-  // 結束條件：河道擠到海獺
   if (river.height <= otter.height) {
     gameOver = true;
   }
@@ -111,15 +159,12 @@ function update() {
 }
 
 function draw() {
-  // 背景
   ctx.fillStyle = "#4caf50";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // 河
   ctx.fillStyle = "rgba(33,150,243,0.5)";
   ctx.fillRect(0, river.y, canvas.width, river.height);
 
-  // 點數
   points.forEach(p => {
     if (!p.active) return;
     ctx.fillStyle = p.color;
@@ -128,24 +173,16 @@ function draw() {
     ctx.fill();
   });
 
-  // 海獺
   const floatY = Math.sin(otter.float) * 4;
   ctx.fillStyle = "#6d4c41";
-  ctx.fillRect(
-    otter.x,
-    otter.y + floatY,
-    otter.width,
-    otter.height
-  );
+  ctx.fillRect(otter.x, otter.y + floatY, otter.width, otter.height);
 
-  // 分數
   ctx.fillStyle = "#fff";
   ctx.font = "22px sans-serif";
   ctx.textAlign = "right";
   ctx.fillText("Score: " + score, canvas.width - 20, 30);
   ctx.textAlign = "left";
 
-  // 結算畫面
   if (gameOver) {
     ctx.fillStyle = "rgba(0,0,0,0.6)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -153,14 +190,27 @@ function draw() {
     ctx.fillStyle = "#fff";
     ctx.font = "48px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2 - 20);
+    ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2 - 30);
 
     ctx.font = "28px sans-serif";
     ctx.fillText(
       "Final Score: " + score,
       canvas.width / 2,
-      canvas.height / 2 + 30
+      canvas.height / 2 + 10
     );
+
+    // 按鈕
+    const bx = canvas.width / 2 - 100;
+    const by = canvas.height / 2 + 60;
+    const bw = 200;
+    const bh = 50;
+
+    ctx.fillStyle = "#2196f3";
+    ctx.fillRect(bx, by, bw, bh);
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "24px sans-serif";
+    ctx.fillText("重新開始", canvas.width / 2, by + 34);
 
     ctx.textAlign = "left";
   }
@@ -177,3 +227,4 @@ loop();
 
 </body>
 </html>
+
