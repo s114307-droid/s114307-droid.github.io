@@ -46,6 +46,21 @@ const otter = {
   float: 0
 };
 
+// 分數
+let score = 0;
+
+// 紅點與黃點（固定不動）
+const points = [
+  // 紅點（5 分）
+  { x: 200, y: river.y + 30, r: 10, color: "red", value: 5, active: true },
+  { x: 650, y: river.y + 90, r: 10, color: "red", value: 5, active: true },
+
+  // 黃點（2 分）
+  { x: 300, y: river.y + 60, r: 8, color: "yellow", value: 2, active: true },
+  { x: 450, y: river.y + 40, r: 8, color: "yellow", value: 2, active: true },
+  { x: 550, y: river.y + 80, r: 8, color: "yellow", value: 2, active: true }
+];
+
 const keys = {};
 window.addEventListener("keydown", e => keys[e.key] = true);
 window.addEventListener("keyup", e => keys[e.key] = false);
@@ -62,11 +77,25 @@ function update() {
     Math.min(river.y + river.height - otter.height, otter.y)
   );
 
+  // 碰撞判斷（吃點數）
+  points.forEach(p => {
+    if (!p.active) return;
+
+    const dx = (otter.x + otter.width / 2) - p.x;
+    const dy = (otter.y + otter.height / 2) - p.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance < p.r + Math.min(otter.width, otter.height) / 2) {
+      score += p.value;
+      p.active = false;
+    }
+  });
+
   otter.float += 0.05;
 }
 
 function draw() {
-  // 背景（如果圖片失敗就畫綠色）
+  // 背景
   if (bgImage.complete && bgImage.naturalWidth !== 0) {
     ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
   } else {
@@ -78,33 +107,5 @@ function draw() {
   ctx.fillStyle = "rgba(33,150,243,0.4)";
   ctx.fillRect(0, river.y, canvas.width, river.height);
 
-  // 海獺
-  const floatY = Math.sin(otter.float) * 4;
-  if (otterImage.complete && otterImage.naturalWidth !== 0) {
-    ctx.drawImage(
-      otterImage,
-      otter.x,
-      otter.y + floatY,
-      otter.width,
-      otter.height
-    );
-  } else {
-    ctx.fillStyle = "#6d4c41";
-    ctx.fillRect(otter.x, otter.y, otter.width, otter.height);
-  }
-}
-
-function loop() {
-  update();
-  draw();
-  requestAnimationFrame(loop);
-}
-
-bgImage.onerror = () => console.error("❌ 背景圖片載入失敗");
-otterImage.onerror = () => console.error("❌ 海獺圖片載入失敗");
-
-loop();
-</script>
-
-</body>
-</html>
+  // 點數
+  points.forEach(
