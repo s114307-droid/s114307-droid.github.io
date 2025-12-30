@@ -27,17 +27,12 @@ canvas {
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-/* ===== 遊戲資料（與之前相同） ===== */
-
+/* ===== 遊戲資料 ===== */
 const riverStart = { y: 260, height: 120 };
 const river = { y: riverStart.y, height: riverStart.height, shrinkSpeed: 10 / 60 };
 
 const otterStart = { x: 400, y: 290 };
-const otter = {
-  x: otterStart.x, y: otterStart.y,
-  width: 90, height: 60,
-  speed: 4, float: 0
-};
+const otter = { x: otterStart.x, y: otterStart.y, width: 90, height: 60, speed: 4, float: 0 };
 
 let score = 0;
 let gameOver = false;
@@ -48,7 +43,6 @@ const pointData = [
   { x: 450, dy: 60, r: 10, color: "#ff5252", value: 5 },
   { x: 600, dy: 80, r: 10, color: "#ff5252", value: 5 },
   { x: 750, dy: 30, r: 10, color: "#ff5252", value: 5 },
-
   { x: 200, dy: 70, r: 8, color: "#ffeb3b", value: 2 },
   { x: 260, dy: 30, r: 8, color: "#ffeb3b", value: 2 },
   { x: 360, dy: 90, r: 8, color: "#ffeb3b", value: 2 },
@@ -59,14 +53,27 @@ const pointData = [
 
 let points = [];
 function resetPoints() {
-  points = pointData.map(p => ({
-    ...p,
-    y: river.y + p.dy,
-    active: true
-  }));
+  points = pointData.map(p => ({ ...p, y: river.y + p.dy, active: true }));
 }
 resetPoints();
 
+/* ===== 產生草地資料 ===== */
+const grassList = [];
+function generateGrass() {
+  const grassCount = 150;
+  for(let i=0; i<grassCount; i++){
+    let x = Math.random() * canvas.width;
+    let y = Math.random() * canvas.height;
+    // 草不在河道裡
+    if(y > river.y && y < river.y + river.height) y -= (river.height/2);
+    const h = 10 + Math.random()*15;
+    const color = ["#388e3c","#2e7d32","#1b5e20"][Math.floor(Math.random()*3)];
+    grassList.push({x,y,h,color});
+  }
+}
+generateGrass();
+
+/* ===== 重新開始 ===== */
 function restartGame() {
   score = 0;
   gameOver = false;
@@ -79,7 +86,6 @@ function restartGame() {
 }
 
 /* ===== 輸入 ===== */
-
 const keys = {};
 window.addEventListener("keydown", e => keys[e.key] = true);
 window.addEventListener("keyup", e => keys[e.key] = false);
@@ -95,117 +101,124 @@ canvas.addEventListener("click", () => {
 });
 
 /* ===== 遊戲邏輯 ===== */
-
 function update() {
-  if (gameOver) return;
+  if(gameOver) return;
 
-  if (keys["ArrowLeft"]) otter.x -= otter.speed;
-  if (keys["ArrowRight"]) otter.x += otter.speed;
-  if (keys["ArrowUp"]) otter.y -= otter.speed;
-  if (keys["ArrowDown"]) otter.y += otter.speed;
+  if(keys["ArrowLeft"]) otter.x -= otter.speed;
+  if(keys["ArrowRight"]) otter.x += otter.speed;
+  if(keys["ArrowUp"]) otter.y -= otter.speed;
+  if(keys["ArrowDown"]) otter.y += otter.speed;
 
-  river.y += river.shrinkSpeed / 2;
+  river.y += river.shrinkSpeed/2;
   river.height -= river.shrinkSpeed;
 
-  otter.y = Math.max(river.y, Math.min(river.y + river.height - otter.height, otter.y));
-  otter.x = Math.max(0, Math.min(canvas.width - otter.width, otter.x));
+  otter.y = Math.max(river.y, Math.min(river.y+river.height-otter.height, otter.y));
+  otter.x = Math.max(0, Math.min(canvas.width-otter.width, otter.x));
 
-  points.forEach(p => {
-    if (!p.active) return;
-    const dx = (otter.x + otter.width / 2) - p.x;
-    const dy = (otter.y + otter.height / 2) - p.y;
-    if (Math.hypot(dx, dy) < p.r + otter.height / 2) {
+  points.forEach(p=>{
+    if(!p.active) return;
+    const dx = (otter.x+otter.width/2)-p.x;
+    const dy = (otter.y+otter.height/2)-p.y;
+    if(Math.hypot(dx,dy)<p.r+otter.height/2){
       score += p.value;
       p.active = false;
     }
   });
 
-  if (river.height <= otter.height) gameOver = true;
+  if(river.height<=otter.height) gameOver=true;
   otter.float += 0.05;
 }
 
 /* ===== UI 工具 ===== */
-
-function isHoverButton() {
-  const bx = canvas.width / 2 - 120;
-  const by = canvas.height / 2 + 70;
-  return mouse.x >= bx && mouse.x <= bx + 240 &&
-         mouse.y >= by && mouse.y <= by + 56;
+function isHoverButton(){
+  const bx = canvas.width/2 - 120;
+  const by = canvas.height/2 + 70;
+  return mouse.x >= bx && mouse.x <= bx+240 && mouse.y >= by && mouse.y <= by+56;
 }
-
-function roundRect(x, y, w, h, r) {
+function roundRect(x,y,w,h,r){
   ctx.beginPath();
-  ctx.moveTo(x+r, y);
-  ctx.arcTo(x+w, y, x+w, y+h, r);
-  ctx.arcTo(x+w, y+h, x, y+h, r);
-  ctx.arcTo(x, y+h, x, y, r);
-  ctx.arcTo(x, y, x+w, y, r);
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
   ctx.closePath();
 }
 
 /* ===== 繪製 ===== */
-
-function draw() {
-  ctx.fillStyle = "#4caf50";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  ctx.fillStyle = "rgba(33,150,243,0.5)";
-  ctx.fillRect(0, river.y, canvas.width, river.height);
-
-  points.forEach(p => {
-    if (!p.active) return;
-    ctx.fillStyle = p.color;
+function draw(){
+  // 草地背景
+  ctx.fillStyle="#4caf50";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  grassList.forEach(g=>{
+    ctx.strokeStyle = g.color;
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.moveTo(g.x,g.y);
+    ctx.lineTo(g.x,g.y-g.h);
+    ctx.stroke();
+  });
+
+  // 河
+  ctx.fillStyle="rgba(33,150,243,0.5)";
+  ctx.fillRect(0,river.y,canvas.width,river.height);
+
+  // 點數
+  points.forEach(p=>{
+    if(!p.active) return;
+    ctx.fillStyle=p.color;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
     ctx.fill();
   });
 
-  ctx.fillStyle = "#6d4c41";
-  ctx.fillRect(otter.x, otter.y + Math.sin(otter.float) * 4, otter.width, otter.height);
+  // 海獺
+  ctx.fillStyle="#6d4c41";
+  ctx.fillRect(otter.x,otter.y+Math.sin(otter.float)*4,otter.width,otter.height);
 
-  ctx.fillStyle = "#fff";
-  ctx.font = "22px sans-serif";
-  ctx.textAlign = "right";
-  ctx.fillText("Score " + score, canvas.width - 20, 30);
-  ctx.textAlign = "left";
+  // 分數
+  ctx.fillStyle="#fff";
+  ctx.font="22px sans-serif";
+  ctx.textAlign="right";
+  ctx.fillText("Score "+score,canvas.width-20,30);
+  ctx.textAlign="left";
 
-  /* ===== 精緻結算畫面 ===== */
-  if (gameOver) {
-    ctx.fillStyle = "rgba(0,0,0,0.65)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // 精緻結算畫面
+  if(gameOver){
+    ctx.fillStyle="rgba(0,0,0,0.65)";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
 
-    ctx.shadowColor = "#fff";
-    ctx.shadowBlur = 20;
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "56px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 50);
+    ctx.shadowColor="#fff";
+    ctx.shadowBlur=20;
+    ctx.fillStyle="#ffffff";
+    ctx.font="56px sans-serif";
+    ctx.textAlign="center";
+    ctx.fillText("GAME OVER",canvas.width/2,canvas.height/2-50);
 
-    ctx.shadowBlur = 0;
-    ctx.font = "26px sans-serif";
-    ctx.fillStyle = "#ffeb3b";
-    ctx.fillText("Final Score", canvas.width / 2, canvas.height / 2);
+    ctx.shadowBlur=0;
+    ctx.font="26px sans-serif";
+    ctx.fillStyle="#ffeb3b";
+    ctx.fillText("Final Score",canvas.width/2,canvas.height/2);
 
-    ctx.font = "40px sans-serif";
-    ctx.fillStyle = "#ffffff";
-    ctx.fillText(score, canvas.width / 2, canvas.height / 2 + 45);
+    ctx.font="40px sans-serif";
+    ctx.fillStyle="#fff";
+    ctx.fillText(score,canvas.width/2,canvas.height/2+45);
 
-    const bx = canvas.width / 2 - 120;
-    const by = canvas.height / 2 + 70;
-
+    // 按鈕
+    const bx = canvas.width/2 - 120;
+    const by = canvas.height/2 + 70;
     ctx.fillStyle = isHoverButton() ? "#42a5f5" : "#1e88e5";
-    roundRect(bx, by, 240, 56, 14);
+    roundRect(bx,by,240,56,14);
     ctx.fill();
 
-    ctx.fillStyle = "#fff";
-    ctx.font = "24px sans-serif";
-    ctx.fillText("重新開始", canvas.width / 2, by + 38);
-
-    ctx.textAlign = "left";
+    ctx.fillStyle="#fff";
+    ctx.font="24px sans-serif";
+    ctx.fillText("重新開始",canvas.width/2,by+38);
+    ctx.textAlign="left";
   }
 }
 
-function loop() {
+function loop(){
   update();
   draw();
   requestAnimationFrame(loop);
