@@ -26,7 +26,7 @@ canvas {
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// ⚠️ 請依你實際檔名修改這裡
+// ⚠️ 圖片仍保留，但不影響畫面顯示
 const bgImage = new Image();
 bgImage.src = "images/jungle.jfif";
 
@@ -77,7 +77,7 @@ function update() {
     Math.min(river.y + river.height - otter.height, otter.y)
   );
 
-  // 碰撞判斷（吃點數）
+  // 碰撞判斷（吃紅點 / 黃點）
   points.forEach(p => {
     if (!p.active) return;
 
@@ -95,17 +95,57 @@ function update() {
 }
 
 function draw() {
-  // 背景
-  if (bgImage.complete && bgImage.naturalWidth !== 0) {
-    ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
-  } else {
-    ctx.fillStyle = "#4caf50";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
+  // 背景（固定顏色，避免整片蓋掉）
+  ctx.fillStyle = "#4caf50";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // 河
   ctx.fillStyle = "rgba(33,150,243,0.4)";
   ctx.fillRect(0, river.y, canvas.width, river.height);
 
   // 點數
-  points.forEach(
+  points.forEach(p => {
+    if (!p.active) return;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // 海獺（有漂浮效果）
+  const floatY = Math.sin(otter.float) * 4;
+  if (otterImage.complete && otterImage.naturalWidth !== 0) {
+    ctx.drawImage(
+      otterImage,
+      otter.x,
+      otter.y + floatY,
+      otter.width,
+      otter.height
+    );
+  } else {
+    ctx.fillStyle = "#6d4c41";
+    ctx.fillRect(otter.x, otter.y, otter.width, otter.height);
+  }
+
+  // 分數顯示（右上角）
+  ctx.fillStyle = "#fff";
+  ctx.font = "22px sans-serif";
+  ctx.textAlign = "right";
+  ctx.fillText("Score: " + score, canvas.width - 20, 30);
+  ctx.textAlign = "left";
+}
+
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+bgImage.onerror = () => console.error("❌ 背景圖片載入失敗");
+otterImage.onerror = () => console.error("❌ 海獺圖片載入失敗");
+
+loop();
+</script>
+
+</body>
+</html>
