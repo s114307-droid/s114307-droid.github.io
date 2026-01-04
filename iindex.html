@@ -1,105 +1,141 @@
-import pygame
-import random
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>挖礦與建設遊戲</title>
+    <style>
+        body {
+            margin: 0;
+            background: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            border-radius: 12px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="game" width="900" height="550"></canvas>
 
-# 初始化Pygame
-pygame.init()
+    <script>
+        const canvas = document.getElementById("game");
+        const ctx = canvas.getContext("2d");
 
-# 定義遊戲視窗大小
-SCREEN_WIDTH, SCREEN_HEIGHT = 600, 400
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("挖礦和建設遊戲")
+        /* ===== 遊戲資料 ===== */
+        const player = { x: 400, y: 290, width: 40, height: 40, speed: 4, color: "#4caf50" };
+        const resources = { stone: 0, wood: 0 };
+        let gameOver = false;
+        let score = 0;
 
-# 顏色
-WHITE = (255, 255, 255)
-GREEN = (0, 255, 0)
-BROWN = (139, 69, 19)
-BLACK = (0, 0, 0)
+        // 目標區域 - 用來展示建設區域
+        const buildArea = { x: 300, y: 450, width: 200, height: 50 };
 
-# 玩家設置
-player_size = 40
-player_x = SCREEN_WIDTH // 2
-player_y = SCREEN_HEIGHT // 2
-player_speed = 5
+        // 挖礦區域
+        const mineArea = { x: 100, y: 350, width: 200, height: 50 };
 
-# 資源
-resources = {"stone": 0, "wood": 0}
+        /* ===== 按鍵輸入 ===== */
+        const keys = {};
+        window.addEventListener("keydown", e => keys[e.key] = true);
+        window.addEventListener("keyup", e => keys[e.key] = false);
 
-# 創建時鐘來控制遊戲更新
-clock = pygame.time.Clock()
+        /* ===== 遊戲邏輯 ===== */
+        function update() {
+            if (gameOver) return;
 
-# 定義玩家動作
-def move_player(keys):
-    global player_x, player_y
+            // 玩家移動
+            if (keys["ArrowLeft"]) player.x -= player.speed;
+            if (keys["ArrowRight"]) player.x += player.speed;
+            if (keys["ArrowUp"]) player.y -= player.speed;
+            if (keys["ArrowDown"]) player.y += player.speed;
 
-    if keys[pygame.K_LEFT]:  # 左移
-        player_x -= player_speed
-    if keys[pygame.K_RIGHT]:  # 右移
-        player_x += player_speed
-    if keys[pygame.K_UP]:  # 上移
-        player_y -= player_speed
-    if keys[pygame.K_DOWN]:  # 下移
-        player_y += player_speed
+            // 控制玩家移動範圍
+            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+            player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
 
-# 繪製玩家角色
-def draw_player():
-    pygame.draw.rect(screen, GREEN, (player_x, player_y, player_size, player_size))
+            // 挖礦
+            if (player.x < mineArea.x + mineArea.width && player.x + player.width > mineArea.x &&
+                player.y < mineArea.y + mineArea.height && player.y + player.height > mineArea.y) {
+                // 挖礦區域內
+                if (keys["m"]) {
+                    resources.stone += 1;
+                    score += 1;
+                }
+            }
 
-# 挖礦功能
-def mine():
-    if random.random() < 0.5:  # 50%機會獲得資源
-        resources["stone"] += 1
-        print("你獲得了一塊石頭！")
+            // 建設
+            if (player.x < buildArea.x + buildArea.width && player.x + player.width > buildArea.x &&
+                player.y < buildArea.y + buildArea.height && player.y + player.height > buildArea.y) {
+                // 建設區域內
+                if (keys["b"] && resources.stone >= 3 && resources.wood >= 5) {
+                    resources.stone -= 3;
+                    resources.wood -= 5;
+                    score += 10; // 每次建設成功增加分數
+                    console.log("建設成功！");
+                }
+            }
 
-# 建設功能
-def build():
-    if resources["wood"] >= 5 and resources["stone"] >= 3:
-        resources["wood"] -= 5
-        resources["stone"] -= 3
-        print("你建造了一個小房子！")
-    else:
-        print("資源不足，無法建設房子！")
+            // 檢查遊戲結束條件（例如資源不足、時間結束等）
+            if (resources.stone >= 10 && resources.wood >= 10) {
+                gameOver = true;
+            }
+        }
 
-# 遊戲主循環
-def game():
-    global player_x, player_y
+        /* ===== UI 工具 ===== */
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    running = True
-    while running:
-        # 檢查事件
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
+            // 背景
+            ctx.fillStyle = "#e3f2fd";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        # 鍵盤控制
-        keys = pygame.key.get_pressed()
-        move_player(keys)
+            // 顯示玩家
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
 
-        # 挖礦和建設操作
-        if keys[pygame.K_m]:  # 按M進行挖礦
-            mine()
-        if keys[pygame.K_b]:  # 按B進行建設
-            build()
+            // 顯示資源
+            ctx.fillStyle = "#000";
+            ctx.font = "20px sans-serif";
+            ctx.fillText("石頭: " + resources.stone, 10, 30);
+            ctx.fillText("木材: " + resources.wood, 10, 60);
+            ctx.fillText("分數: " + score, canvas.width - 100, 30);
 
-        # 填充背景
-        screen.fill(WHITE)
+            // 挖礦區域
+            ctx.fillStyle = "#ffeb3b";
+            ctx.fillRect(mineArea.x, mineArea.y, mineArea.width, mineArea.height);
+            ctx.fillStyle = "#000";
+            ctx.fillText("按 'M' 挖礦", mineArea.x + 50, mineArea.y + 30);
 
-        # 顯示玩家
-        draw_player()
+            // 建設區域
+            ctx.fillStyle = "#8bc34a";
+            ctx.fillRect(buildArea.x, buildArea.y, buildArea.width, buildArea.height);
+            ctx.fillStyle = "#000";
+            ctx.fillText("按 'B' 建設 (3 石頭 + 5 木材)", buildArea.x + 50, buildArea.y + 30);
 
-        # 顯示資源
-        font = pygame.font.SysFont(None, 36)
-        resource_text = font.render(f"石頭: {resources['stone']}  木材: {resources['wood']}", True, BLACK)
-        screen.blit(resource_text, (10, 10))
+            // 遊戲結束顯示
+            if (gameOver) {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        # 更新顯示
-        pygame.display.update()
+                ctx.fillStyle = "#fff";
+                ctx.font = "40px sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText("遊戲結束！", canvas.width / 2, canvas.height / 2 - 50);
+                ctx.fillText("最終分數: " + score, canvas.width / 2, canvas.height / 2);
+            }
+        }
 
-        # 設定更新速度
-        clock.tick(30)
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
 
-    # 遊戲結束
-    pygame.quit()
-
-# 啟動遊戲
-if __name__ == "__main__":
-    game()
+        gameLoop();  // 開始遊戲循環
+    </script>
+</body>
+</html>
