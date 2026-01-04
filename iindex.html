@@ -1,0 +1,73 @@
+import random
+
+class Player:
+    def __init__(self, name):
+        self.name = name
+        self.health = 100
+        self.resources = {"wood": 0, "fish": 0, "stone": 0}
+
+    def chop_tree(self):
+        """砍樹功能"""
+        print(f"{self.name} 正在砍樹...")
+        if random.random() < 0.8:  # 80%機會砍到樹
+            self.resources["wood"] += 1
+            print(f"你獲得了1個木材！目前木材數量：{self.resources['wood']}")
+        else:
+            print("樹太硬，砍不動！")
+
+    def fish(self):
+        """釣魚功能"""
+        print(f"{self.name} 正在釣魚...")
+        if random.random() < 0.7:  # 70%機會釣到魚
+            self.resources["fish"] += 1
+            print(f"你釣到了一條魚！目前魚的數量：{self.resources['fish']}")
+        else:
+            print("沒釣到魚，請再試一次。")
+
+    def mine(self):
+        """挖礦功能"""
+        print(f"{self.name} 正在挖礦...")
+        if random.random() < 0.6:  # 60%機會獲得礦石
+            self.resources["stone"] += 1
+            print(f"你獲得了1塊石頭！目前石頭數量：{self.resources['stone']}")
+        else:
+            print("礦石沒有了，試試別的地方！")
+
+    def show_resources(self):
+        """顯示玩家資源狀況"""
+        print(f"{self.name} 的資源狀況：")
+        for resource, amount in self.resources.items():
+            print(f"{resource}: {amount}")
+
+# 遊戲循環
+def game():
+    player_name = input("請輸入玩家名稱: ")
+    player = Player(player_name)
+
+    while True:
+        print("\n選擇一個活動：")
+        print("1. 砍樹")
+        print("2. 釣魚")
+        print("3. 挖礦")
+        print("4. 查看資源")
+        print("5. 離開遊戲")
+        
+        choice = input("請輸入選擇（1/2/3/4/5）: ")
+
+        if choice == "1":
+            player.chop_tree()
+        elif choice == "2":
+            player.fish()
+        elif choice == "3":
+            player.mine()
+        elif choice == "4":
+            player.show_resources()
+        elif choice == "5":
+            print("感謝遊玩！")
+            break
+        else:
+            print("無效選擇，請再次輸入。")
+
+# 啟動遊戲
+if __name__ == "__main__":
+    game()
