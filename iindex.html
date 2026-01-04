@@ -1,72 +1,104 @@
+import pygame
 import random
 
-class Player:
-    def __init__(self, name):
-        self.name = name
-        self.health = 100
-        self.resources = {"wood": 0, "fish": 0, "stone": 0}
+# 初始化Pygame
+pygame.init()
 
-    def chop_tree(self):
-        """砍樹功能"""
-        print(f"{self.name} 正在砍樹...")
-        if random.random() < 0.8:  # 80%機會砍到樹
-            self.resources["wood"] += 1
-            print(f"你獲得了1個木材！目前木材數量：{self.resources['wood']}")
-        else:
-            print("樹太硬，砍不動！")
+# 定義遊戲視窗大小
+SCREEN_WIDTH, SCREEN_HEIGHT = 600, 400
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("挖礦和建設遊戲")
 
-    def fish(self):
-        """釣魚功能"""
-        print(f"{self.name} 正在釣魚...")
-        if random.random() < 0.7:  # 70%機會釣到魚
-            self.resources["fish"] += 1
-            print(f"你釣到了一條魚！目前魚的數量：{self.resources['fish']}")
-        else:
-            print("沒釣到魚，請再試一次。")
+# 顏色
+WHITE = (255, 255, 255)
+GREEN = (0, 255, 0)
+BROWN = (139, 69, 19)
+BLACK = (0, 0, 0)
 
-    def mine(self):
-        """挖礦功能"""
-        print(f"{self.name} 正在挖礦...")
-        if random.random() < 0.6:  # 60%機會獲得礦石
-            self.resources["stone"] += 1
-            print(f"你獲得了1塊石頭！目前石頭數量：{self.resources['stone']}")
-        else:
-            print("礦石沒有了，試試別的地方！")
+# 玩家設置
+player_size = 40
+player_x = SCREEN_WIDTH // 2
+player_y = SCREEN_HEIGHT // 2
+player_speed = 5
 
-    def show_resources(self):
-        """顯示玩家資源狀況"""
-        print(f"{self.name} 的資源狀況：")
-        for resource, amount in self.resources.items():
-            print(f"{resource}: {amount}")
+# 資源
+resources = {"stone": 0, "wood": 0}
 
-# 遊戲循環
+# 創建時鐘來控制遊戲更新
+clock = pygame.time.Clock()
+
+# 定義玩家動作
+def move_player(keys):
+    global player_x, player_y
+
+    if keys[pygame.K_LEFT]:  # 左移
+        player_x -= player_speed
+    if keys[pygame.K_RIGHT]:  # 右移
+        player_x += player_speed
+    if keys[pygame.K_UP]:  # 上移
+        player_y -= player_speed
+    if keys[pygame.K_DOWN]:  # 下移
+        player_y += player_speed
+
+# 繪製玩家角色
+def draw_player():
+    pygame.draw.rect(screen, GREEN, (player_x, player_y, player_size, player_size))
+
+# 挖礦功能
+def mine():
+    if random.random() < 0.5:  # 50%機會獲得資源
+        resources["stone"] += 1
+        print("你獲得了一塊石頭！")
+
+# 建設功能
+def build():
+    if resources["wood"] >= 5 and resources["stone"] >= 3:
+        resources["wood"] -= 5
+        resources["stone"] -= 3
+        print("你建造了一個小房子！")
+    else:
+        print("資源不足，無法建設房子！")
+
+# 遊戲主循環
 def game():
-    player_name = input("請輸入玩家名稱: ")
-    player = Player(player_name)
+    global player_x, player_y
 
-    while True:
-        print("\n選擇一個活動：")
-        print("1. 砍樹")
-        print("2. 釣魚")
-        print("3. 挖礦")
-        print("4. 查看資源")
-        print("5. 離開遊戲")
-        
-        choice = input("請輸入選擇（1/2/3/4/5）: ")
+    running = True
+    while running:
+        # 檢查事件
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
 
-        if choice == "1":
-            player.chop_tree()
-        elif choice == "2":
-            player.fish()
-        elif choice == "3":
-            player.mine()
-        elif choice == "4":
-            player.show_resources()
-        elif choice == "5":
-            print("感謝遊玩！")
-            break
-        else:
-            print("無效選擇，請再次輸入。")
+        # 鍵盤控制
+        keys = pygame.key.get_pressed()
+        move_player(keys)
+
+        # 挖礦和建設操作
+        if keys[pygame.K_m]:  # 按M進行挖礦
+            mine()
+        if keys[pygame.K_b]:  # 按B進行建設
+            build()
+
+        # 填充背景
+        screen.fill(WHITE)
+
+        # 顯示玩家
+        draw_player()
+
+        # 顯示資源
+        font = pygame.font.SysFont(None, 36)
+        resource_text = font.render(f"石頭: {resources['stone']}  木材: {resources['wood']}", True, BLACK)
+        screen.blit(resource_text, (10, 10))
+
+        # 更新顯示
+        pygame.display.update()
+
+        # 設定更新速度
+        clock.tick(30)
+
+    # 遊戲結束
+    pygame.quit()
 
 # 啟動遊戲
 if __name__ == "__main__":
