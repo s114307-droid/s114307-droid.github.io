@@ -86,6 +86,11 @@
         }
 
         /* ===== UI 工具 ===== */
+        function drawPixel(x, y, color, width = 10, height = 10) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, width, height);
+        }
+
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -94,8 +99,7 @@
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             // 顯示玩家
-            ctx.fillStyle = player.color;
-            ctx.fillRect(player.x, player.y, player.width, player.height);
+            drawPixel(player.x, player.y, player.color);
 
             // 顯示資源
             ctx.fillStyle = "#000";
