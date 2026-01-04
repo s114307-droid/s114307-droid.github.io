@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>挖礦與建設遊戲</title>
+    <style>
+        body {
+            margin: 0;
+            background: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            border-radius: 12px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="game" width="900" height="550"></canvas>
+
+    <script>
+        const canvas = document.getElementById("game");
+        const ctx = canvas.getContext("2d");
+
+        // 玩家初始資料
+        const player = { x: 400, y: 290, width: 20, height: 20, speed: 4, color: "#4caf50" };
+
+        // 資源資料
+        let resources = { stone: 0, wood: 0 };
+        let score = 0;
+        let gameOver = false;
+
+        // 物品區域
+        const mineArea = { x: 100, y: 350, width: 200, height: 50 }; // 挖礦區域
+        const buildArea = { x: 300, y: 450, width: 200, height: 50 }; // 建設區域
+
+        // 按鍵事件
+        const keys = {};
+        window.addEventListener("keydown", e => keys[e.key] = true);
+        window.addEventListener("keyup", e => keys[e.key] = false);
+
+        // 更新遊戲狀態
+        function update() {
+            if (gameOver) return;
+
+            // 玩家移動
+            if (keys["ArrowLeft"]) player.x -= player.speed;
+            if (keys["ArrowRight"]) player.x += player.speed;
+            if (keys["ArrowUp"]) player.y -= player.speed;  // 挖礦
+            if (keys["ArrowDown"]) player.y += player.speed;  // 建設
+
+            // 控制玩家在畫布範圍內移動
+            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+            player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+
+            // 挖礦
+            if (player.x < mineArea.x + mineArea.width && player.x + player.width > mineArea.x &&
+                player.y < mineArea.y + mineArea.height && player.y + player.height > mineArea.y) {
+                // 挖礦區域內，按上鍵獲取礦石
+                if (keys["ArrowUp"]) {
+                    resources.stone += 1;
+                    score += 1;
+                    console.log("獲得1個礦石");
+                }
+            }
+
+            // 建設
+            if (player.x < buildArea.x + buildArea.width && player.x + player.width > buildArea.x &&
+                player.y < buildArea.y + buildArea.height && player.y + player.height > buildArea.y) {
+                // 建設區域內，按下鍵建設木屋
+                if (keys["ArrowDown"] && resources.stone >= 3 && resources.wood >= 5) {
+                    resources.stone -= 3;
+                    resources.wood -= 5;
+                    score += 10; // 每次建設成功，增加 10 分
+                    console.log("建設木屋成功！");
+                }
+            }
+
+            // 遊戲結束條件
+            if (resources.stone >= 10 && resources.wood >= 10) {
+                gameOver = true;
+            }
+        }
+
+        // 繪製遊戲畫面
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 背景：色塊風格
+            ctx.fillStyle = "#8bc34a";
+            ctx.fillRect(0, 0, canvas.width, canvas.height); // 使用綠色背景色塊
+
+            // 顯示玩家
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+
+            // 顯示資源
+            ctx.fillStyle = "#000";
+            ctx.font = "20px sans-serif";
+            ctx.fillText("石頭: " + resources.stone, 10, 30);
+            ctx.fillText("木材: " + resources.wood, 10, 60);
+            ctx.fillText("分數: " + score, canvas.width - 100, 30);
+
+            // 挖礦區域
+            ctx.fillStyle = "#ffeb3b";
+            ctx.fillRect(mineArea.x, mineArea.y, mineArea.width, mineArea.height);
+            ctx.fillStyle = "#000";
+            ctx.fillText("按 '↑' 挖礦", mineArea.x + 50, mineArea.y + 30);
+
+            // 建設區域
+            ctx.fillStyle = "#8bc34a";
+            ctx.fillRect(buildArea.x, buildArea.y, buildArea.width, buildArea.height);
+            ctx.fillStyle = "#000";
+            ctx.fillText("按 '↓' 建設 (3 石頭 + 5 木材)", buildArea.x + 50, buildArea.y + 30);
+
+            // 遊戲結束顯示
+            if (gameOver) {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = "#fff";
+                ctx.font = "40px sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText("遊戲結束！", canvas.width / 2, canvas.height / 2 - 50);
+                ctx.fillText("最終分數: " + score, canvas.width / 2, canvas.height / 2);
+            }
+        }
+
+        // 遊戲循環
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();  // 開始遊戲循環
+    </script>
+</body>
+</html>
